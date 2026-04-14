@@ -1,16 +1,31 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+from typing import Optional
 
-class ItemCreate(BaseModel):
+class ItemBase(BaseModel):
     title: str
-    price: int
-    description: str | None = None
-    contact_number: str
-    image_url: str | None = None
-    location: str | None = None
+    base_price: float
+    description: Optional[str] = None
+    whatsapp_number: str
+    auction_ends_at: Optional[datetime] = None
+    payment_method: str = "Cash on Delivery"
+
+class ItemCreate(ItemBase):
+    pass
+
+class ItemOut(ItemBase):
+    id: str
+    current_price: float
+    image_url: Optional[str] = None
+    current_bidder_name: Optional[str] = None
+    current_bidder_whatsapp: Optional[str] = None
+    bid_updated_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class ItemResponse(ItemCreate):
-    id: int
-
-    class Config:
-        from_attributes = True
+class BidCreate(BaseModel):
+    bidder_name: str
+    bidder_whatsapp: str
+    amount: float

@@ -1,12 +1,31 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
+from pydantic_settings import BaseSettings
 
-DATABASE_URL = "sqlite:///./marketplace.db"
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+    CORS_ORIGINS: str = "*"
+
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+
+# Support connection to PostgreSQL or SQLite fallback
+# When using SQLite, check_same_thread must be false
+connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
+    settings.DATABASE_URL, connect_args=connect_args
 )
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-
-Base = declarative_base()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
