@@ -1,11 +1,25 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../models/item.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000/api/v1';
+  String get baseUrl {
+    try {
+      final configured = dotenv.env['API_BASE_URL'];
+      if (configured != null && configured.isNotEmpty) {
+        return configured;
+      }
+    } catch (_) {
+      // Dotenv is optional in dev; use a sensible platform default.
+    }
+
+    return kIsWeb
+        ? 'http://127.0.0.1:8000/api/v1'
+        : 'http://127.0.0.1:8000/api/v1';
+  }
 
   Future<List<Item>> getItems({int limit = 50}) async {
     final response = await http.get(Uri.parse('$baseUrl/items/?limit=$limit'));

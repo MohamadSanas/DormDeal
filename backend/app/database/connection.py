@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -14,12 +15,15 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Support connection to PostgreSQL or SQLite fallback
-# When using SQLite, check_same_thread must be false
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+# Support connection to PostgreSQL or SQLite fallback.
+# For Supabase / external Postgres with a pooler, disable SQLAlchemy's own pooling.
+is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+connect_args = {"check_same_thread": False} if is_sqlite else {}
 
 engine = create_engine(
-    settings.DATABASE_URL, connect_args=connect_args
+    settings.DATABASE_URL,
+    connect_args=connect_args,
+    poolclass=None if is_sqlite else NullPool,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
