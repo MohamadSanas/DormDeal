@@ -69,55 +69,64 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 🔵 Header Card
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade100),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    'Create account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.shade100),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Create account',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Start selling and bidding in your campus marketplace.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Start selling and bidding in your campus marketplace.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
-            const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-            // 🧾 Form Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      width: MediaQuery.of(context).size.width < MediaQuery.of(context).size.height
+                          ? MediaQuery.of(context).size.width * 0.9
+                          : MediaQuery.of(context).size.width * 0.5,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
                     // 👤 Name
                     TextFormField(
                       controller: _nameController,
@@ -223,15 +232,19 @@ class _SignupScreenState extends State<SignupScreen> {
                               builder: (_) => const LoginScreen()),
                         );
                       },
-                      child: const Text(
-                          "Already have an account? Login"),
+                      child: const Text("Already have an account? Login"),
                     ),
-                  ],
-                ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+             
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

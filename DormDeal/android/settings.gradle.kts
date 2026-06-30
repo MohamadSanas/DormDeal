@@ -24,3 +24,7 @@ plugins {
 }
 
 include(":app")
+
+// Keep the Android Gradle project name explicit so IDE importers do not
+// collapse it into the generic "android" root project name.
+rootProject.name = "frontend_android"
