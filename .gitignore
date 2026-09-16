@@ -53,3 +53,6 @@ Thumbs.db
 *.log
 *.swp
 *.tmp
+
+# Android / Eclipse / Gradle IDE settings
+**/android/.settings/
