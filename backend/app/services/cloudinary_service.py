@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Configure cloudinary if keys are provided
+# Configure Cloudinary if keys are provided in environment
 if settings.CLOUDINARY_CLOUD_NAME and settings.CLOUDINARY_API_KEY:
     cloudinary.config(
         cloud_name=settings.CLOUDINARY_CLOUD_NAME,
