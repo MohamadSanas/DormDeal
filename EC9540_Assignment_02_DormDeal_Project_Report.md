@@ -3,7 +3,8 @@
 
 **Course Code:** EC9540 – Human Computer Interaction  
 **Assignment:** Assignment 02 – Interactive Product Evaluation & Comprehensive HCI Project Report  
-**Project Title:** DormDeal – University Campus Peer-to-Peer Auction & Marketplace Platform  
+**Project Title:** DormDeal – University Campus Peer-to-Peer Auction & Marketplace Platform (Alpha v3)  
+**Software Release:** Alpha v3 (Release Candidate)  
 **Academic Batch / Team:** E22 / Team DormDeal  
 **Date of Submission & Evaluation:** September 2026  
 **Authors / Student Registration Numbers:** [Insert Student Names & Registration Numbers]  

@@ -214,6 +214,274 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showHelpModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        builder: (_, scrollCtrl) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          child: ListView(
+            controller: scrollCtrl,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.help_outline_rounded, color: _D.primary, size: 24),
+                      SizedBox(width: 8),
+                      Text('Help & FAQ',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _D.primary)),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Divider(height: 20),
+              _faqItem(
+                question: 'How does bidding work on DormDeal?',
+                answer: 'Sellers post items with a base starting price and an auction deadline (1 Day, 3 Days, or 1 Week). Prospective student buyers submit bids with 1-tap quick increment buttons. When the countdown timer reaches zero, the highest bidder automatically wins the auction.',
+              ),
+              _faqItem(
+                question: 'How do I arrange payment & pickup?',
+                answer: 'DormDeal connects the winning buyer and seller directly on WhatsApp. Both students can then coordinate a convenient public campus meeting spot (e.g., Faculty Canteen, Library Lobby, or Hostel Gate) for safe Cash on Delivery (COD) inspection and handover.',
+              ),
+              _faqItem(
+                question: 'What happens if I get outbid?',
+                answer: 'You will receive an instant notification in your Alerts tab, and your status on "My Bids" will switch to "Outbid" in red. You can tap the item to submit a higher counter-bid before the auction closes.',
+              ),
+              _faqItem(
+                question: 'Can I edit or cancel my listing?',
+                answer: 'Yes! Navigate to the "My Listings" tab, select your item, and tap "Edit" in the top bar to update the description or category. You can also conclude the auction early by tapping "Sell Now".',
+              ),
+              _faqItem(
+                question: 'Who is eligible to use DormDeal?',
+                answer: 'DormDeal is exclusively reserved for enrolled university undergraduates and postgraduates. Verified student profiles and faculty affiliations foster a secure, trusted peer community.',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _faqItem({required String question, required String answer}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: _D.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _D.outlineVariant),
+      ),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+        iconColor: _D.primary,
+        collapsedIconColor: _D.onSurfaceVariant,
+        title: Text(question,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _D.onSurface)),
+        children: [
+          Text(answer,
+            style: const TextStyle(fontSize: 13, height: 1.5, color: _D.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        builder: (_, scrollCtrl) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          child: ListView(
+            controller: scrollCtrl,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.policy_outlined, color: _D.primary, size: 24),
+                      SizedBox(width: 8),
+                      Text('Terms & Safety Policy',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _D.primary)),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Divider(height: 20),
+              _policyCard(
+                icon: Icons.shield_outlined,
+                title: 'Campus Safety & Handover Guidelines',
+                body: '• Always meet inside university premises during daytime.\n'
+                      '• Preferred handover spots: Faculty Canteen, Library reception, or Hostel Security gate.\n'
+                      '• Inspect electronics, appliances, and textbooks thoroughly before handing over payment.\n'
+                      '• Use Cash on Delivery (COD) in person. Never transfer advance funds to unverified bank accounts.',
+              ),
+              const SizedBox(height: 12),
+              _policyCard(
+                icon: Icons.verified_user_outlined,
+                title: 'Student Code of Conduct',
+                body: '• Every bid placed is a binding commitment to purchase if you win.\n'
+                      '• Fake, speculative, or malicious bids violate campus standards and lead to account deactivation.\n'
+                      '• Maintain courteous and honest peer-to-peer communication when chatting on WhatsApp.',
+              ),
+              const SizedBox(height: 12),
+              _policyCard(
+                icon: Icons.block_rounded,
+                title: 'Prohibited Items Policy',
+                body: 'The following are strictly banned from listing on DormDeal:\n'
+                      '• Alcoholic beverages, tobacco, vapes, and drugs.\n'
+                      '• Weapons, explosives, or hazardous laboratory chemicals.\n'
+                      '• Academic dishonesty items (e.g. leaked exam papers, completed coursework).\n'
+                      '• Counterfeit or stolen merchandise.',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _policyCard({required IconData icon, required String title, required String body}) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _D.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _D.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: _D.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(title,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _D.onSurface)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(body,
+            style: const TextStyle(fontSize: 13, height: 1.5, color: _D.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        title: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: _D.secondaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.storefront_rounded, size: 32, color: _D.primary),
+            ),
+            const SizedBox(height: 10),
+            const Text('DormDeal',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _D.primary)),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD6F0E0),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text('Alpha v3 (Release Candidate)',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1B6B3A))),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              const Text(
+                'University Campus Peer-to-Peer Auction & Marketplace Platform designed for students moving out of boarding.',
+                style: TextStyle(fontSize: 13, height: 1.4, color: _D.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              ),
+              const Divider(height: 24),
+              const Text('Academic Project Context',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _D.onSurfaceVariant)),
+              const SizedBox(height: 4),
+              const Text('• Course: EC9540 – Human Computer Interaction\n• Batch: E22 Faculty of Engineering\n• Team: Team DormDeal',
+                style: TextStyle(fontSize: 12, height: 1.5, color: _D.onSurface)),
+              const SizedBox(height: 12),
+              const Text('What\'s New in Alpha v3:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _D.primary)),
+              const SizedBox(height: 4),
+              const Text(
+                '✔ Interactive Price & Sort Filters (Under Rs. 1k to 6k+)\n'
+                '✔ Native WhatsApp Linking with Number Formatting\n'
+                '✔ Automatic 401 Session Expiration & Re-Auth\n'
+                '✔ View & Edit Profile with Campus Credentials\n'
+                '✔ Direct WhatsApp Coordination on Sold Listings\n'
+                '✔ Full In-App Help, FAQ & Campus Safety Rules',
+                style: TextStyle(fontSize: 12, height: 1.5, color: _D.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _D.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Close'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -249,9 +517,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _accountDetailsCard(),
             const SizedBox(height: 14),
             _settingsCard('Support & Information', [
-              _SettingItem(icon: Icons.help_outline_rounded, label: 'Help & FAQ', onTap: () {}),
-              _SettingItem(icon: Icons.policy_outlined, label: 'Terms & Safety Policy', onTap: () {}),
-              _SettingItem(icon: Icons.info_outline_rounded, label: 'About DormDeal (v2.0)', onTap: () {}),
+              _SettingItem(
+                icon: Icons.help_outline_rounded,
+                label: 'Help & FAQ',
+                onTap: () => _showHelpModal(context),
+              ),
+              _SettingItem(
+                icon: Icons.policy_outlined,
+                label: 'Terms & Safety Policy',
+                onTap: () => _showTermsModal(context),
+              ),
+              _SettingItem(
+                icon: Icons.info_outline_rounded,
+                label: 'About DormDeal (Alpha v3)',
+                onTap: () => _showAboutModal(context),
+              ),
             ]),
             const SizedBox(height: 24),
             _logoutButton(context),

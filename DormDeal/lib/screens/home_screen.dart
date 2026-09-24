@@ -58,6 +58,13 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
+  // ── Price & Sort Filter state ──────────────────────────────────────────
+  double? _minPrice;
+  double? _maxPrice;
+  String _sortBy = 'default'; // 'default', 'price_asc', 'price_desc', 'time_asc'
+
+  bool get _hasPriceFilter => _minPrice != null || _maxPrice != null || _sortBy != 'default';
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +82,177 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshItems() {
     setState(() { _futureItems = _apiService.getItems(); });
+  }
+
+  // ── Price Filter Modal ───────────────────────────────────────────────────
+  void _showPriceFilterModal() {
+    double? tempMin = _minPrice;
+    double? tempMax = _maxPrice;
+    String tempSort = _sortBy;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.tune_rounded, color: _C.primary, size: 22),
+                      SizedBox(width: 8),
+                      Text('Price & Sort Filters',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _C.primary)),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Divider(height: 16),
+              const Text('Sort Listings By',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _C.onSurface)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildSortChip('Default / Recent', 'default', tempSort, (v) => setModalState(() => tempSort = v)),
+                  _buildSortChip('Price: Low to High', 'price_asc', tempSort, (v) => setModalState(() => tempSort = v)),
+                  _buildSortChip('Price: High to Low', 'price_desc', tempSort, (v) => setModalState(() => tempSort = v)),
+                  _buildSortChip('Ending Soonest', 'time_asc', tempSort, (v) => setModalState(() => tempSort = v)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text('Filter by Price Range',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _C.onSurface)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildPriceChip('All Prices', null, null, tempMin, tempMax, (min, max) => setModalState(() { tempMin = min; tempMax = max; })),
+                  _buildPriceChip('Under Rs. 1,000', 0, 1000, tempMin, tempMax, (min, max) => setModalState(() { tempMin = min; tempMax = max; })),
+                  _buildPriceChip('Rs. 1,000 – 3,000', 1000, 3000, tempMin, tempMax, (min, max) => setModalState(() { tempMin = min; tempMax = max; })),
+                  _buildPriceChip('Rs. 3,000 – 6,000', 3000, 6000, tempMin, tempMax, (min, max) => setModalState(() { tempMin = min; tempMax = max; })),
+                  _buildPriceChip('Above Rs. 6,000', 6000, null, tempMin, tempMax, (min, max) => setModalState(() { tempMin = min; tempMax = max; })),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _minPrice = null;
+                          _maxPrice = null;
+                          _sortBy = 'default';
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Reset All'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _minPrice = tempMin;
+                          _maxPrice = tempMax;
+                          _sortBy = tempSort;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _C.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Apply Filter', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortChip(String label, String value, String current, ValueChanged<String> onSelected) {
+    final selected = value == current;
+    return GestureDetector(
+      onTap: () => onSelected(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? _C.primary : _C.surfaceLowest,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? _C.primary : _C.outlineVariant),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? Colors.white : _C.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriceChip(
+    String label,
+    double? min,
+    double? max,
+    double? currentMin,
+    double? currentMax,
+    void Function(double?, double?) onSelected,
+  ) {
+    final selected = min == currentMin && max == currentMax;
+    return GestureDetector(
+      onTap: () => onSelected(min, max),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? _C.primary : _C.surfaceLowest,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? _C.primary : _C.outlineVariant),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? Colors.white : _C.onSurface,
+          ),
+        ),
+      ),
+    );
   }
 
   // ── build ────────────────────────────────────────────────────────────────
@@ -207,8 +385,19 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             margin: const EdgeInsets.only(right: 6),
             child: IconButton(
-              icon: const Icon(Icons.tune_rounded, color: _C.primary, size: 20),
-              onPressed: () {},
+              icon: Icon(
+                _hasPriceFilter ? Icons.tune : Icons.tune_rounded,
+                color: _hasPriceFilter ? Colors.white : _C.primary,
+                size: 20,
+              ),
+              style: _hasPriceFilter
+                  ? IconButton.styleFrom(
+                      backgroundColor: _C.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    )
+                  : null,
+              onPressed: _showPriceFilterModal,
+              tooltip: 'Price & Sort Filter',
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             ),
@@ -325,15 +514,58 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           )
         else
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.filter_list_rounded, size: 16, color: _C.primary),
-            label: const Text('Filter',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _C.primary)),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: Size.zero,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_hasPriceFilter) ...[
+                GestureDetector(
+                  onTap: () => setState(() {
+                    _minPrice = null;
+                    _maxPrice = null;
+                    _sortBy = 'default';
+                  }),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD6F0E0),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _maxPrice != null
+                              ? '≤ Rs. ${_maxPrice!.toInt()}'
+                              : (_minPrice != null ? '≥ Rs. ${_minPrice!.toInt()}' : 'Sorted'),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF1B6B3A)),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.close_rounded, size: 12, color: Color(0xFF1B6B3A)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              TextButton.icon(
+                onPressed: _showPriceFilterModal,
+                icon: Icon(Icons.filter_list_rounded, size: 16, color: _hasPriceFilter ? const Color(0xFF1B6B3A) : _C.primary),
+                label: Text(
+                  _hasPriceFilter ? 'Price Filtered' : 'Price Filter',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _hasPriceFilter ? const Color(0xFF1B6B3A) : _C.primary,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: _hasPriceFilter ? const Color(0xFFE8F8EE) : Colors.transparent,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  minimumSize: Size.zero,
+                ),
+              ),
+            ],
           ),
       ],
     );
@@ -389,6 +621,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ).toList();
         }
 
+        // 3. Price filter
+        if (_minPrice != null) {
+          items = items.where((item) => item.currentPrice >= _minPrice!).toList();
+        }
+        if (_maxPrice != null) {
+          items = items.where((item) => item.currentPrice <= _maxPrice!).toList();
+        }
+
+        // 4. Sort filter
+        if (_sortBy == 'price_asc') {
+          items.sort((a, b) => a.currentPrice.compareTo(b.currentPrice));
+        } else if (_sortBy == 'price_desc') {
+          items.sort((a, b) => b.currentPrice.compareTo(a.currentPrice));
+        } else if (_sortBy == 'time_asc') {
+          items.sort((a, b) => a.auctionEndsAt.compareTo(b.auctionEndsAt));
+        }
+
         // ── Empty state ────────────────────────────────────────────────
         if (items.isEmpty) {
           return SliverFillRemaining(
@@ -402,17 +651,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     _searchQuery.isNotEmpty
                         ? 'No results for "$_searchQuery"'
-                        : 'No items in ${_categories[_selectedCategory].label}',
+                        : (_hasPriceFilter
+                            ? 'No items match your price/sort filters'
+                            : 'No items in ${_categories[_selectedCategory].label}'),
                     style: const TextStyle(color: _C.onSurfaceVariant, fontSize: 15),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () {
-                      setState(() => _selectedCategory = 0);
+                      setState(() {
+                        _selectedCategory = 0;
+                        _minPrice = null;
+                        _maxPrice = null;
+                        _sortBy = 'default';
+                      });
                       _searchCtrl.clear();
                     },
-                    child: const Text('Clear filters'),
+                    child: const Text('Clear all filters'),
                   ),
                 ],
               ),
