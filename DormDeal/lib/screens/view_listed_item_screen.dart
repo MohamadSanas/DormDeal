@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/whatsapp_service.dart';
 
 class _D {
   static const primary            = Color(0xFF003F87);
@@ -323,6 +324,9 @@ class _ViewListedItemScreenState extends State<ViewListedItemScreen> {
         ]),
       );
     }
+    final contact = widget.item.topBidderContact;
+    final name = widget.item.topBidderName;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -331,16 +335,24 @@ class _ViewListedItemScreenState extends State<ViewListedItemScreen> {
         border: Border.all(color: _D.secondaryContainer),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Highest Bidder',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
-            letterSpacing: 0.4, color: _D.onSurfaceVariant)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Highest Bidder',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+                letterSpacing: 0.4, color: _D.onSurfaceVariant)),
+            if (contact.isNotEmpty)
+              Text('Mobile: $contact',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _D.primary)),
+          ],
+        ),
         const SizedBox(height: 10),
         Row(children: [
           const CircleAvatar(radius: 22, backgroundColor: _D.secondaryContainer,
             child: Icon(Icons.person_rounded, color: _D.primary, size: 24)),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(widget.item.topBidderName,
+            Text(name,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _D.onSurface)),
             const SizedBox(height: 2),
             Row(children: [
@@ -353,6 +365,31 @@ class _ViewListedItemScreenState extends State<ViewListedItemScreen> {
           Text('Rs. ${widget.item.currentBid.toStringAsFixed(0)}',
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _D.primary)),
         ]),
+        if (contact.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                WhatsAppService.launchWhatsApp(
+                  context: context,
+                  rawPhone: contact,
+                  message: "Hi $name! I'm contacting you regarding your bid of Rs. ${widget.item.currentBid.toStringAsFixed(0)} on '${widget.item.title}' on DormDeal.",
+                  recipientName: name,
+                );
+              },
+              icon: const Icon(Icons.chat_bubble_rounded, size: 16, color: Color(0xFF25D366)),
+              label: const Text('Contact Bidder on WhatsApp',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1B6B3A))),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF8FD4A8)),
+                backgroundColor: const Color(0xFFE8F8EE),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        ],
       ]),
     );
   }
@@ -456,6 +493,8 @@ class _ViewListedItemScreenState extends State<ViewListedItemScreen> {
 
   // ── Sold banner ─────────────────────────────────────────────────────────
   Widget _soldBanner() {
+    final contact = widget.item.topBidderContact;
+    final name = widget.item.topBidderName;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -463,20 +502,55 @@ class _ViewListedItemScreenState extends State<ViewListedItemScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF8FD4A8)),
       ),
-      child: Row(children: [
-        const Icon(Icons.check_circle_rounded, color: Color(0xFF1B6B3A), size: 28),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Auction Ended — Item Sold!',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1B6B3A))),
-          const SizedBox(height: 2),
-          Text('Sold to ${widget.item.topBidderName} for Rs. ${widget.item.currentBid.toStringAsFixed(0)}.',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF2D6A4F))),
-          const SizedBox(height: 4),
-          Text('Contact: ${widget.item.topBidderContact}',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF1B6B3A))),
-        ])),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF1B6B3A), size: 28),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Auction Ended — Item Sold!',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1B6B3A))),
+              const SizedBox(height: 2),
+              Text('Sold to $name for Rs. ${widget.item.currentBid.toStringAsFixed(0)}.',
+                style: const TextStyle(fontSize: 13, color: Color(0xFF2D6A4F))),
+              if (contact.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text('Buyer Mobile: $contact',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1B6B3A))),
+              ],
+            ])),
+          ]),
+          if (contact.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  WhatsAppService.launchWhatsApp(
+                    context: context,
+                    rawPhone: contact,
+                    message: "Hi $name! You won the auction for '${widget.item.title}' on DormDeal for Rs. ${widget.item.currentBid.toStringAsFixed(0)}. Let's coordinate the pickup/delivery.",
+                    recipientName: name,
+                  );
+                },
+                icon: const Icon(Icons.chat_bubble_rounded, size: 18, color: Colors.white),
+                label: const Text(
+                  'Chat with Buyer on WhatsApp',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  elevation: 1,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

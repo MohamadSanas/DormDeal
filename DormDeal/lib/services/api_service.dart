@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -10,10 +11,26 @@ import '../models/item.dart';
 import '../models/user.dart';
 import '../models/bid_item.dart';
 import '../models/notification_model.dart';
+import '../screens/login_screen.dart';
 
 class ApiService {
   static String? token;
   static User? currentUser;
+
+  /// Global Navigator key used to route to LoginScreen when session expires
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  /// Handles 401 Unauthorized responses by clearing auth state and navigating to LoginScreen
+  static void handleUnauthorized() {
+    token = null;
+    currentUser = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen(sessionExpired: true)),
+        (route) => false,
+      );
+    });
+  }
 
   static Map<String, String> get authHeaders {
     final headers = <String, String>{
@@ -101,6 +118,56 @@ class ApiService {
     currentUser = null;
   }
 
+  // ── User Profile ────────────────────────────────────────────────────────────
+  Future<User> getMe() async {
+    if (token == null) throw Exception('Not authenticated');
+    final response = await http
+        .get(Uri.parse('$baseUrl/auth/me'), headers: authHeaders)
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
+
+    if (response.statusCode == 200) {
+      currentUser = User.fromJson(json.decode(response.body));
+      return currentUser!;
+    }
+    throw Exception('Failed to load profile');
+  }
+
+  Future<User> updateProfile({
+    String? name,
+    String? whatsappNumber,
+    String? university,
+  }) async {
+    if (token == null) throw Exception('Not authenticated');
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (whatsappNumber != null) body['whatsapp_number'] = whatsappNumber;
+    if (university != null) body['university'] = university;
+
+    final response = await http.patch(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: authHeaders,
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
+
+    if (response.statusCode == 200) {
+      currentUser = User.fromJson(json.decode(response.body));
+      return currentUser!;
+    }
+    final decoded = json.decode(response.body);
+    final msg = decoded is Map<String, dynamic> ? decoded['detail'] : null;
+    throw Exception(msg ?? 'Failed to update profile');
+  }
+
   // ── Items ───────────────────────────────────────────────────────────────────
   Future<List<Item>> getItems({int limit = 50, String? category, String? search}) async {
     final params = <String, String>{'limit': limit.toString()};
@@ -135,6 +202,11 @@ class ApiService {
     final response = await http
         .get(Uri.parse('$baseUrl/items/mine'), headers: authHeaders)
         .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
@@ -183,6 +255,11 @@ class ApiService {
     var streamedResponse = await request.send();
     var response = await http.Response.fromStream(streamedResponse);
 
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       return Item.fromJson(json.decode(response.body));
     } else {
@@ -197,6 +274,10 @@ class ApiService {
       Uri.parse('$baseUrl/items/$itemId'),
       headers: authHeaders,
     );
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
     if (response.statusCode != 204 && response.statusCode != 200) {
       throw Exception('Failed to delete item');
     }
@@ -219,6 +300,11 @@ class ApiService {
       }),
     );
 
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
+
     if (response.statusCode == 200) {
       return Item.fromJson(json.decode(response.body));
     }
@@ -232,6 +318,11 @@ class ApiService {
     final response = await http
         .get(Uri.parse('$baseUrl/bids/mine'), headers: authHeaders)
         .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
@@ -248,6 +339,11 @@ class ApiService {
         .get(Uri.parse('$baseUrl/notifications/'), headers: authHeaders)
         .timeout(const Duration(seconds: 10));
 
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+      throw Exception('Session expired');
+    }
+
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
       return jsonResponse.map((n) => AppNotification.fromJson(n)).toList();
@@ -257,16 +353,22 @@ class ApiService {
   }
 
   Future<void> markNotificationRead(String id) async {
-    await http.patch(
+    final response = await http.patch(
       Uri.parse('$baseUrl/notifications/$id/read'),
       headers: authHeaders,
     );
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+    }
   }
 
   Future<void> markAllNotificationsRead() async {
-    await http.patch(
+    final response = await http.patch(
       Uri.parse('$baseUrl/notifications/read-all'),
       headers: authHeaders,
     );
+    if (response.statusCode == 401) {
+      handleUnauthorized();
+    }
   }
 }

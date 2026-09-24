@@ -1,4 +1,5 @@
 import 'package:campus_marketplace/screens/login_screen.dart';
+import 'package:campus_marketplace/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -18,6 +19,7 @@ class DormDealApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: ApiService.navigatorKey,
       title: 'DormDeal',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0B5ED7)),

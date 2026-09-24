@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/user.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 
 class _D {
   static const primary            = Color(0xFF003F87);
+  static const primaryContainer   = Color(0xFF0056B3);
   static const background         = Color(0xFFF8F9FA);
   static const surfaceLowest      = Color(0xFFFFFFFF);
   static const surfaceContainer   = Color(0xFFEDEEEF);
@@ -12,6 +14,7 @@ class _D {
   static const onSurfaceVariant   = Color(0xFF424752);
   static const outlineVariant     = Color(0xFFC2C6D4);
   static const error              = Color(0xFFBA1A1A);
+  static const success            = Color(0xFF1B6B3A);
 }
 
 class ProfileScreen extends StatefulWidget {
@@ -26,14 +29,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _bidsCount = 0;
   int _wonCount = 0;
   bool _loadingStats = true;
+  User? _user;
 
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    _user = ApiService.currentUser;
+    _loadProfileAndStats();
   }
 
-  Future<void> _loadStats() async {
+  Future<void> _loadProfileAndStats() async {
+    try {
+      final user = await ApiService().getMe();
+      if (mounted) {
+        setState(() {
+          _user = user;
+        });
+      }
+    } catch (_) {}
+
     try {
       final listings = await ApiService().getMyListings();
       final bids = await ApiService().getMyBids();
@@ -50,6 +64,156 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showEditProfileModal() {
+    final nameCtrl = TextEditingController(text: _user?.name ?? '');
+    final waCtrl = TextEditingController(text: _user?.whatsappNumber ?? '');
+    final uniCtrl = TextEditingController(text: _user?.university ?? '');
+    final formKey = GlobalKey<FormState>();
+    bool saving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Edit Profile',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _D.primary),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 20),
+                  const Text('Full Name', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _D.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your full name',
+                      prefixIcon: const Icon(Icons.person_outline_rounded, size: 20, color: _D.primary),
+                      filled: true,
+                      fillColor: _D.background,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _D.outlineVariant)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _D.outlineVariant)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    validator: (v) => v == null || v.trim().isEmpty ? 'Name cannot be empty' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('WhatsApp Mobile Number', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _D.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: waCtrl,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. 0771234567 or +94771234567',
+                      prefixIcon: const Icon(Icons.chat_bubble_outline_rounded, size: 20, color: Color(0xFF25D366)),
+                      filled: true,
+                      fillColor: _D.background,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _D.outlineVariant)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _D.outlineVariant)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    validator: (v) => v == null || v.trim().isEmpty ? 'WhatsApp number is required for deal coordination' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('University / Faculty', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _D.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: uniCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Faculty of Engineering / Science',
+                      prefixIcon: const Icon(Icons.school_outlined, size: 20, color: _D.primary),
+                      filled: true,
+                      fillColor: _D.background,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _D.outlineVariant)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _D.outlineVariant)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: saving
+                          ? null
+                          : () async {
+                              if (!formKey.currentState!.validate()) return;
+                              setModalState(() => saving = true);
+                              try {
+                                final updated = await ApiService().updateProfile(
+                                  name: nameCtrl.text.trim(),
+                                  whatsappNumber: waCtrl.text.trim(),
+                                  university: uniCtrl.text.trim(),
+                                );
+                                if (mounted) {
+                                  setState(() {
+                                    _user = updated;
+                                  });
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Profile updated successfully!'),
+                                      backgroundColor: _D.success,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                setModalState(() => saving = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Update failed: ${e.toString().replaceAll('Exception: ', '')}'),
+                                    backgroundColor: _D.error,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _D.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: saving
+                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Save Changes', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,88 +225,207 @@ class _ProfileScreenState extends State<ProfileScreen> {
         automaticallyImplyLeading: false,
         title: const Text('Profile',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _D.primary)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_note_rounded, color: _D.primary, size: 26),
+            tooltip: 'Edit Profile',
+            onPressed: _showEditProfileModal,
+          ),
+        ],
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1),
             child: Container(height: 1, color: _D.secondaryContainer)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
-        children: [
-          _avatarSection(),
-          const SizedBox(height: 24),
-          _statsRow(),
-          const SizedBox(height: 24),
-          _settingsCard('Account', [
-            _SettingItem(icon: Icons.person_outline_rounded, label: 'Edit Profile', onTap: () {}),
-            _SettingItem(icon: Icons.phone_outlined, label: 'Phone & WhatsApp', onTap: () {}),
-            _SettingItem(icon: Icons.school_outlined, label: 'University Email', onTap: () {}),
-          ]),
-          const SizedBox(height: 14),
-          _settingsCard('Preferences', [
-            _SettingItem(
-                icon: Icons.notifications_outlined, label: 'Notification Settings', onTap: () {}),
-            _SettingItem(icon: Icons.privacy_tip_outlined, label: 'Privacy', onTap: () {}),
-          ]),
-          const SizedBox(height: 14),
-          _settingsCard('Support', [
-            _SettingItem(icon: Icons.help_outline_rounded, label: 'Help & FAQ', onTap: () {}),
-            _SettingItem(icon: Icons.policy_outlined, label: 'Terms & Privacy Policy', onTap: () {}),
-            _SettingItem(icon: Icons.info_outline_rounded, label: 'About DormDeal', onTap: () {}),
-          ]),
-          const SizedBox(height: 24),
-          _logoutButton(context),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _loadProfileAndStats,
+        color: _D.primary,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+          children: [
+            _avatarSection(),
+            const SizedBox(height: 20),
+            _statsRow(),
+            const SizedBox(height: 20),
+            _accountDetailsCard(),
+            const SizedBox(height: 14),
+            _settingsCard('Support & Information', [
+              _SettingItem(icon: Icons.help_outline_rounded, label: 'Help & FAQ', onTap: () {}),
+              _SettingItem(icon: Icons.policy_outlined, label: 'Terms & Safety Policy', onTap: () {}),
+              _SettingItem(icon: Icons.info_outline_rounded, label: 'About DormDeal (v2.0)', onTap: () {}),
+            ]),
+            const SizedBox(height: 24),
+            _logoutButton(context),
+          ],
+        ),
       ),
     );
   }
 
   Widget _avatarSection() {
-    final user = ApiService.currentUser;
+    final user = _user ?? ApiService.currentUser;
     final displayName = user?.name.isNotEmpty == true ? user!.name : 'Campus Student';
     final displayEmail = user?.email.isNotEmpty == true ? user!.email : 'student@campus.edu';
     final uni = user?.university?.isNotEmpty == true ? user!.university! : 'Verified Student';
+    final phone = user?.whatsappNumber?.isNotEmpty == true ? user!.whatsappNumber! : 'No WhatsApp set';
 
-    return Column(children: [
-      Stack(children: [
-        Container(
-          width: 88,
-          height: 88,
-          decoration: const BoxDecoration(color: _D.secondaryContainer, shape: BoxShape.circle),
-          child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(44),
-                  child: Image.network(user.avatarUrl!, fit: BoxFit.cover),
-                )
-              : const Icon(Icons.person_rounded, size: 48, color: _D.primary),
-        ),
-        Positioned(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _D.surfaceLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _D.outlineVariant),
+        boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 10, offset: Offset(0, 2))],
+      ),
+      child: Column(children: [
+        Stack(children: [
+          Container(
+            width: 84,
+            height: 84,
+            decoration: const BoxDecoration(color: _D.secondaryContainer, shape: BoxShape.circle),
+            child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(42),
+                    child: Image.network(user.avatarUrl!, fit: BoxFit.cover),
+                  )
+                : const Icon(Icons.person_rounded, size: 48, color: _D.primary),
+          ),
+          Positioned(
             bottom: 0,
             right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(color: _D.primary, shape: BoxShape.circle),
-              child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
-            )),
-      ]),
-      const SizedBox(height: 12),
-      Text(displayName,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _D.onSurface)),
-      const SizedBox(height: 4),
-      Text(displayEmail, style: const TextStyle(fontSize: 13, color: _D.onSurfaceVariant)),
-      const SizedBox(height: 8),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration:
-            BoxDecoration(color: _D.secondaryContainer, borderRadius: BorderRadius.circular(999)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.verified_user_rounded, size: 14, color: _D.primary),
-          const SizedBox(width: 4),
-          Text(uni,
-              style:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _D.primary)),
+            child: GestureDetector(
+              onTap: _showEditProfileModal,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(color: _D.primary, shape: BoxShape.circle),
+                child: const Icon(Icons.edit_rounded, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
         ]),
+        const SizedBox(height: 12),
+        Text(displayName,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _D.onSurface)),
+        const SizedBox(height: 4),
+        Text(displayEmail, style: const TextStyle(fontSize: 13, color: _D.onSurfaceVariant)),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: _D.secondaryContainer, borderRadius: BorderRadius.circular(999)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.verified_user_rounded, size: 14, color: _D.primary),
+                const SizedBox(width: 4),
+                Text(uni, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _D.primary)),
+              ]),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: const Color(0xFFD6F0E0), borderRadius: BorderRadius.circular(999)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.chat_bubble_rounded, size: 13, color: Color(0xFF1B6B3A)),
+                const SizedBox(width: 4),
+                Text(phone, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1B6B3A))),
+              ]),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        OutlinedButton.icon(
+          onPressed: _showEditProfileModal,
+          icon: const Icon(Icons.edit_outlined, size: 16),
+          label: const Text('Edit Profile Details'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _D.primary,
+            side: const BorderSide(color: _D.primary),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _accountDetailsCard() {
+    final user = _user ?? ApiService.currentUser;
+    return Container(
+      decoration: BoxDecoration(
+        color: _D.surfaceLowest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _D.outlineVariant),
       ),
-    ]);
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Account Information',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                        color: _D.onSurfaceVariant)),
+                GestureDetector(
+                  onTap: _showEditProfileModal,
+                  child: const Text('Edit',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _D.primary)),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: _D.outlineVariant),
+          _detailRow(
+            icon: Icons.person_outline_rounded,
+            label: 'Full Name',
+            value: user?.name.isNotEmpty == true ? user!.name : 'Not set',
+            onTap: _showEditProfileModal,
+          ),
+          const Divider(height: 1, indent: 52, color: _D.outlineVariant),
+          _detailRow(
+            icon: Icons.chat_bubble_outline_rounded,
+            label: 'WhatsApp Phone',
+            value: user?.whatsappNumber?.isNotEmpty == true ? user!.whatsappNumber! : 'Not set',
+            onTap: _showEditProfileModal,
+          ),
+          const Divider(height: 1, indent: 52, color: _D.outlineVariant),
+          _detailRow(
+            icon: Icons.school_outlined,
+            label: 'University / Faculty',
+            value: user?.university?.isNotEmpty == true ? user!.university! : 'Not set',
+            onTap: _showEditProfileModal,
+          ),
+          const Divider(height: 1, indent: 52, color: _D.outlineVariant),
+          _detailRow(
+            icon: Icons.email_outlined,
+            label: 'Campus Email',
+            value: user?.email.isNotEmpty == true ? user!.email : 'Not set',
+            onTap: null, // Email is immutable login identity
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, size: 20, color: _D.primary),
+      title: Text(label, style: const TextStyle(fontSize: 12, color: _D.onSurfaceVariant)),
+      subtitle: Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _D.onSurface)),
+      trailing: onTap != null ? const Icon(Icons.edit_rounded, size: 16, color: _D.outlineVariant) : null,
+      dense: true,
+      onTap: onTap,
+    );
   }
 
   Widget _statsRow() {

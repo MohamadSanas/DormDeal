@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../models/item.dart';
+import '../services/whatsapp_service.dart';
 import 'place_bid_screen.dart';
 
 class _D {
@@ -87,11 +88,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   Future<void> _contact() async {
-    final n = widget.item.whatsappNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    final uri = Uri.parse('https://wa.me/$n');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    await WhatsAppService.launchWhatsApp(
+      context: context,
+      rawPhone: widget.item.whatsappNumber,
+      message: "Hi! I am interested in your listing '${widget.item.title}' on DormDeal.",
+      recipientName: 'Seller',
+    );
   }
 
   @override

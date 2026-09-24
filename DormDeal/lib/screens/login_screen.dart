@@ -21,7 +21,8 @@ class _AppColors {
 }
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  final bool sessionExpired;
+  const LoginScreen({Key? key, this.sessionExpired = false}) : super(key: key);
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -47,6 +48,18 @@ class _LoginScreenState extends State<LoginScreen>
       duration: const Duration(milliseconds: 600),
     )..forward();
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+
+    if (widget.sessionExpired) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your session has expired. Please log in again.'),
+            backgroundColor: Color(0xFFBA1A1A),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      });
+    }
   }
 
   @override
